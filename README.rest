@@ -1,0 +1,68 @@
+clj-rhino
+=========
+
+a nice wrapper to handle rhino from clojure
+
+who?
+----
+
+marianoguerra
+
+why?
+----
+
+the java api for rhino is not really nice
+
+how?
+----
+
+you can see the tests for some usage, here are some REPL examples:
+
+        user=> (require '[clj-rhino :as js])
+        nil
+        user=> (def sc (js/new-safe-scope))
+        #'user/sc
+        user=> (js/eval sc "1 + 1")
+        2
+        user=> (js/eval sc "a = 1 + 1")
+        2
+        user=> (js/get sc "a")
+        2
+        user=> (js/get sc "b")
+        #<UniqueTag org.mozilla.javascript.UniqueTag@172897f: NOT_FOUND>
+        user=> (js/undefined? (js/get sc "b"))
+        true
+        user=> (js/get sc "b" :w00t?)
+        :w00t?
+        user=> (js/defined? (js/get sc "b"))
+        false
+        user=> (js/set! sc "b" 42)
+        nil
+        user=> (js/defined? (js/get sc "b"))
+        true
+        user=> (js/get sc "b" :w00t?)
+        42
+        user=> (js/eval sc "a = {name: 'spongebob'}")
+        #<NativeObject [object Object]>
+        user=> (js/get-in sc [:a :name])
+        "spongebob"
+        user=> (js/get-in sc [:a :age])
+        #<UniqueTag org.mozilla.javascript.UniqueTag@172897f: NOT_FOUND>
+        user=> (js/get-in sc [:a :age] :dont-know)
+        :dont-know
+        user=> (def compiled-fun (js/compile-function sc "function (a, b) { return a + b; }" :filename "foo.js"))
+        #'user/compiled-fun
+        user=> (js/set! sc "add" compiled-fun)
+        nil
+        user=> (js/eval sc "add(1, 3)")
+        4.0
+        user=>
+
+license?
+--------
+
+it seems the clojure people under this circumstances say something like:
+
+Copyright © 2013 marianoguerra
+
+Distributed under the Eclipse Public License, the same as Clojure.
