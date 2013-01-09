@@ -56,7 +56,26 @@ you can see the tests for some usage, here are some REPL examples::
         nil
         user=> (js/eval sc "add(1, 3)")
         4.0
-        user=>
+
+handy convertions::
+
+        user=> (def get-field (js/compile-function sc "function getField(obj, field) { return obj[field]; }"))
+        #'user/get-field
+
+        user=> (js/set! sc "getField" get-field)
+        nil
+
+        user=> (js/set! sc "obj" (js/with-context #(js/to-js {:name "spongebob"} sc %)))
+        nil
+
+        user=> (js/eval sc "getField(obj, 'name')")
+        "spongebob"
+
+        user=> (js/eval sc "o = {name: 'spongebob', friends: ['patrick', 'sandy']};")
+        #<NativeObject [object Object]>
+
+        user=> (js/from-js (js/eval sc "o = {name: 'spongebob', friends: ['patrick', 'sandy']};"))
+        {:friends ["patrick" "sandy"], :name "spongebob"}
 
 license?
 --------
