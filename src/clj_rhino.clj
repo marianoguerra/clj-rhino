@@ -1,13 +1,21 @@
 (ns clj-rhino
   (:refer-clojure :exclude (eval get get-in set!))
-  (:import [org.mozilla.javascript Context UniqueTag]))
+  (:import [org.mozilla.javascript Context UniqueTag NativeArray NativeObject]))
 
 (defprotocol RhinoConvertible
   (-to-rhino [object scope ctx] "convert a value to a rhino compatible type"))
 
+(defprotocol ClojureConvertible
+  (-from-rhino [object]
+           "convert a value from rhino to a more clojure friendly representation"))
+
 (defn to-js [obj scope ctx]
   "convert obj to a rhino compatible object"
   (-to-rhino obj scope ctx))
+
+(defn from-js [obj]
+  "convert obj from rhino into a clojure friendly representation"
+  (-from-rhino obj))
 
 (defn- return-self [obj scope ctx] obj)
   
@@ -51,6 +59,31 @@
 
 ;; Maybe a Java array, otherwise fail
 (extend java.lang.Object       RhinoConvertible {:-to-rhino to-js-generic})
+
+(defn- entryset-to-pair [entry]
+  (let [str-key (.getKey entry)
+        key (keyword str-key)
+        js-value (.getValue entry)
+        val (from-js js-value)]
+
+  [key val]))
+
+(defn- from-js-object [obj]
+  (apply hash-map (mapcat entryset-to-pair (.entrySet obj))))
+
+(extend nil                    ClojureConvertible {:-from-rhino identity})
+(extend java.lang.Boolean      ClojureConvertible {:-from-rhino identity})
+(extend java.lang.Number       ClojureConvertible {:-from-rhino identity})
+(extend java.math.BigInteger   ClojureConvertible {:-from-rhino identity})
+(extend java.math.BigDecimal   ClojureConvertible {:-from-rhino identity})
+(extend java.lang.CharSequence ClojureConvertible {:-from-rhino identity})
+(extend java.lang.Object       ClojureConvertible {:-from-rhino identity})
+; NOTE: undefined and null will return nil, there are other tags which should not 
+; be produced from a js program
+; https://github.com/mozilla/rhino/blob/master/src/org/mozilla/javascript/UniqueTag.java
+(extend UniqueTag              ClojureConvertible {:-from-rhino (fn [obj] nil)})
+(extend NativeObject           ClojureConvertible {:-from-rhino from-js-object})
+(extend NativeArray            ClojureConvertible {:-from-rhino (comp vec (partial map from-js))})
 
 (def insecure-vars ["isXMLName" "uneval" "InternalError" "JavaException"
                     "With" "Call" "Script" "Iterator" "StopIteration",

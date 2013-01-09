@@ -16,6 +16,12 @@
                   (is (= (js/to-js item scope ctx) js-item)))
                 (map vector arr js-arr)))))
 
+(defn- is-identity [value]
+  (is (= (js/from-js value) value)))
+
+(defn- assert-simetric-convertion [obj1 scope ctx obj2]
+  (is (= (js/from-js (js/to-js obj1 scope ctx)) obj2)))
+
 (deftest js-test
   (testing "undefined? works"
            (is (not (js/undefined? 1)))
@@ -114,4 +120,39 @@
            (js/with-context (fn [ctx]
              (let [scope (js/new-safe-scope)]
                    (is (thrown? Exception (js/to-js (atom {}) scope ctx)))))))
+
+  (testing "from-js works"
+           (is-identity nil)
+           (is-identity 1)
+           (is-identity 1.2)
+           (is-identity "asd")
+           (is-identity true)
+
+           (js/with-context
+             (fn [ctx]
+               (let [scope (js/new-safe-scope)]
+                 (is (= (js/from-js UniqueTag/NOT_FOUND) nil))
+                 (assert-simetric-convertion [] scope ctx [])
+                 (assert-simetric-convertion [1] scope ctx [1])
+                 (assert-simetric-convertion [1 nil] scope ctx [1 nil])
+                 (assert-simetric-convertion [1 nil 1.2] scope ctx [1 nil 1.2])
+                 (assert-simetric-convertion [1 nil 1.2 "asd"] scope ctx 
+                                             [1 nil 1.2 "asd"])
+                 (assert-simetric-convertion [1 nil 1.2 "asd" true] scope ctx
+                                             [1 nil 1.2 "asd" true])
+
+                 (assert-simetric-convertion {} scope ctx {})
+                 (assert-simetric-convertion {:b 1} scope ctx {:b 1})
+                 (assert-simetric-convertion {:b 1 "c" true} scope ctx
+                                             {:b 1 :c true})
+                 (assert-simetric-convertion {:b 1 "c" true :foo nil} scope ctx
+                                             {:b 1 :c true :foo nil})
+                 (assert-simetric-convertion {:b {:c {:d 4}}} scope ctx
+                                             {:b {:c {:d 4}}})
+                 (assert-simetric-convertion {:b {"c" {:d 4}}} scope ctx
+                                             {:b {:c {:d 4}}})
+                 (assert-simetric-convertion {:b {"c" {:d [{"e" 4}]}}} scope ctx
+                                             {:b {:c {:d [{:e 4}]}}})
+                 ))))
   )
+
