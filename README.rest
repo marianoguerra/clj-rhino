@@ -16,6 +16,10 @@ the java api for rhino is not really nice
 how?
 ----
 
+go to clojars page for instructions:
+
+https://clojars.org/org.marianoguerra/clj-rhino
+
 you can see the tests for some usage, here are some REPL examples::
 
         user=> (require '[clj-rhino :as js])
