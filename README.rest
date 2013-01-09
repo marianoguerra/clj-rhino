@@ -98,6 +98,29 @@ exposing clojure functions to rhino::
         user=> (js/eval scope "add(1, 2)")
         3.0
 
+exposing objects with functions::
+
+
+        user=> (require '[clj-rhino :as js])
+        nil
+
+        user=> (defn add [ctx scope this [a b]] (+ a b))
+        #'user/add
+
+        user=> (defn mul [ctx scope this [a b]] (* a b))
+        #'user/mul
+
+        user=> (def scope (js/new-safe-scope))
+        #'user/scope
+
+        user=> (def api {:add add :multiply mul})
+        #'user/api
+
+        user=> (js/with-context (fn [ctx]
+          #_=>   (js/set! scope "api" (js/to-js api scope ctx))
+          #_=>   (js/eval scope "api.add(1, 2) + api.multiply(2, 3)")))
+        9.0
+
 license?
 --------
 

@@ -39,6 +39,16 @@
     (to-js (seq obj) scope ctx)
     (throw (Exception. (str "Don't know how to convert to rhino " (class obj))))))
 
+(defn make-fn [fun]
+  "return an object that can be used as a function in rhino,
+  fun must receive the following arguments [ctx scope this args]
+  args will be passed through from-js before calling fun and the result 
+  through to-js"
+
+  (proxy [BaseFunction] []
+    (call [ctx scope this args]
+      (to-js (fun ctx scope this (from-js args)) scope ctx))))
+
 (extend nil                    RhinoConvertible {:-to-rhino return-self})
 (extend java.lang.Boolean      RhinoConvertible {:-to-rhino return-self})
 
@@ -57,6 +67,10 @@
 ;; Collections
 (extend java.util.Map          RhinoConvertible {:-to-rhino to-js-object})
 (extend java.util.Collection   RhinoConvertible {:-to-rhino to-js-array})
+
+;; Functions
+(extend clojure.lang.Fn        RhinoConvertible {:-to-rhino (fn [obj scope ctx]
+                                                              (make-fn obj))})
 
 ;; Maybe a Java array, otherwise fail
 (extend java.lang.Object       RhinoConvertible {:-to-rhino to-js-generic})
@@ -200,12 +214,3 @@
                                               (or filename "<eval>")
                                               (or line-number 1) sec-domain))))
 
-(defn make-fn [fun]
-  "return an object that can be used as a function in rhino,
-  fun must receive the following arguments [ctx scope this args]
-  args will be passed through from-js before calling fun and the result 
-  through to-js"
-
-  (proxy [BaseFunction] []
-    (call [ctx scope this args]
-      (to-js (fun ctx scope this (from-js args)) scope ctx))))

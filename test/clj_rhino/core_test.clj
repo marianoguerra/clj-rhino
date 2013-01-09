@@ -161,9 +161,16 @@
   (testing "native clojure functions can be added"
            (js/with-context
              (fn [ctx]
-               (let [scope (js/new-safe-scope)]
-                 (js/set! scope "add" (js/make-fn (fn [ctx scope this [a b]] (+ a b))))
-                 (is (= (js/eval scope "add(1, 2)") 3.0))))))
+               (let [scope (js/new-safe-scope)
+                     add (fn [ctx scope this [a b]] (+ a b))
+                     multiply (fn [ctx scope this [a b]] (* a b))
+                     api {:add add :multiply multiply}]
+                 (js/set! scope "add" (js/make-fn add))
+                 (js/set! scope "api" (js/to-js api scope ctx))
+
+                 (is (= (js/eval scope "add(1, 2)") 3.0))
+                 (is (= (js/eval scope "api.add(1, 2) + api.multiply(2, 3)") 9.0)) 
+                 ))))
 
 )
 
