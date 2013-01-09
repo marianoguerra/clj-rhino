@@ -121,6 +121,16 @@ exposing objects with functions::
           #_=>   (js/eval scope "api.add(1, 2) + api.multiply(2, 3)")))
         9.0
 
+or if you don't need the internal parameters::
+
+        (js/with-context
+          (fn [ctx]
+            (let [scope (js/new-safe-scope)
+                  add (fn [a b] (+ a b))]
+              
+              (js/set! scope "add" (js/wrap-plain-fn add))
+              (js/eval scope "add(1, 2)") 3.0)))
+
 license?
 --------
 

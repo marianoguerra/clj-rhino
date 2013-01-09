@@ -158,6 +158,15 @@
                                              {:b {:c {:d [{:e 4}]}}})
                  ))))
 
+  (testing "simple clojure functions can be added to js env"
+           (js/with-context
+             (fn [ctx]
+               (let [scope (js/new-safe-scope)
+                     add (fn [a b] (+ a b))]
+                 
+                 (js/set! scope "add" (js/wrap-plain-fn add))
+                 (is (= (js/eval scope "add(1, 2)") 3.0))))))
+
   (testing "native clojure functions can be added"
            (js/with-context
              (fn [ctx]

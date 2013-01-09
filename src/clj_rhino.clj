@@ -49,6 +49,14 @@
     (call [ctx scope this args]
       (to-js (fun ctx scope this (from-js args)) scope ctx))))
 
+(defn wrap-plain-fn [fun]
+ "wrap fun with a function that accepts all the internal arguments
+ and does (apply fun args)
+ with this version you can expose any plain clojure function but you don't
+ have access to scope, context or this"
+  (make-fn (fn [ctx scope this args]
+             (apply fun args))))
+
 (extend nil                    RhinoConvertible {:-to-rhino return-self})
 (extend java.lang.Boolean      RhinoConvertible {:-to-rhino return-self})
 
