@@ -81,6 +81,23 @@ handy convertions::
         user=> (js/from-js (js/eval sc "o = {name: 'spongebob', friends: ['patrick', 'sandy']};"))
         {:friends ["patrick" "sandy"], :name "spongebob"}
 
+exposing clojure functions to rhino::
+
+        user=> (require '[clj-rhino :as js])
+        nil
+
+        user=> (defn add [ctx scope this [a b]] (+ a b))
+        #'user/add
+
+        user=> (def scope (js/new-safe-scope))
+        #'user/scope
+
+        user=> (js/set! scope "add" (js/make-fn add))
+        nil
+
+        user=> (js/eval scope "add(1, 2)")
+        3.0
+
 license?
 --------
 

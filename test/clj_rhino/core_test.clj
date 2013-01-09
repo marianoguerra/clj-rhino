@@ -80,46 +80,49 @@
              (is (= (js/get scope "b") false))))
 
   (testing "to-js works"
-           (js/with-context (fn [ctx]
-             (let [scope (js/new-safe-scope)]
+           (js/with-context
+             (fn [ctx]
+               (let [scope (js/new-safe-scope)]
 
-               (is (= (js/to-js nil scope ctx) nil))
-               (is (= (js/to-js 1 scope ctx) 1))
-               (is (= (js/to-js 1/2 scope ctx) 0.5))
-               (is (= (js/to-js true scope ctx) true))
-               (is (= (js/to-js "foo" scope ctx) "foo"))
-               (is (= (js/to-js :foo scope ctx) "foo"))
+                 (is (= (js/to-js nil scope ctx) nil))
+                 (is (= (js/to-js 1 scope ctx) 1))
+                 (is (= (js/to-js 1/2 scope ctx) 0.5))
+                 (is (= (js/to-js true scope ctx) true))
+                 (is (= (js/to-js "foo" scope ctx) "foo"))
+                 (is (= (js/to-js :foo scope ctx) "foo"))
 
-               (check-array-to-js [] scope ctx)
-               (check-array-to-js [nil 1 1/2 true "foo" :foo] scope ctx)
-               (check-array-to-js '(nil 1 1/2 true "foo" :foo) scope ctx)
+                 (check-array-to-js [] scope ctx)
+                 (check-array-to-js [nil 1 1/2 true "foo" :foo] scope ctx)
+                 (check-array-to-js '(nil 1 1/2 true "foo" :foo) scope ctx)
 
-               ; check to-js-generic
-               (check-array-to-js (to-array [nil 1 1/2 true "foo" :foo]) scope ctx)
+                 ; check to-js-generic
+                 (check-array-to-js (to-array [nil 1 1/2 true "foo" :foo]) scope ctx)
 
-               (is (= (get (js/to-js {:name "mariano"} scope ctx) "name") "mariano"))
-               (is (= (get (js/to-js {:name "mariano" :age 27} scope ctx) "age") 27))))))
+                 (is (= (get (js/to-js {:name "mariano"} scope ctx) "name") "mariano"))
+                 (is (= (get (js/to-js {:name "mariano" :age 27} scope ctx) "age") 27))))))
 
   (testing "to-js works on complex nested structures"
-           (js/with-context (fn [ctx]
-             (let [scope (js/new-safe-scope)
-                   obj {:name "bob"
-                        :age 27
-                        :tags ["yellow" :sponge ["a" :b 3.2]]
-                        :friends {:sandy "squirrel"
-                                  :patrick "star"}}
-                   js-obj (js/to-js obj scope ctx)]
+           (js/with-context
+             (fn [ctx]
+               (let [scope (js/new-safe-scope)
+                     obj {:name "bob"
+                          :age 27
+                          :tags ["yellow" :sponge ["a" :b 3.2]]
+                          :friends {:sandy "squirrel"
+                                    :patrick "star"}}
+                     js-obj (js/to-js obj scope ctx)]
 
-               (is (= (get js-obj "name") "bob"))
-               (is (= (get js-obj "age") 27))
-               (is (= (.get (get js-obj "tags") 1) "sponge"))
-               (is (= (.get (.get (get js-obj "tags") 2) 1) "b"))
-               (is (= (get-in js-obj ["friends" "sandy"]) "squirrel"))))))
+                 (is (= (get js-obj "name") "bob"))
+                 (is (= (get js-obj "age") 27))
+                 (is (= (.get (get js-obj "tags") 1) "sponge"))
+                 (is (= (.get (.get (get js-obj "tags") 2) 1) "b"))
+                 (is (= (get-in js-obj ["friends" "sandy"]) "squirrel"))))))
 
   (testing "unknown types throw exception when converting to-js"
-           (js/with-context (fn [ctx]
-             (let [scope (js/new-safe-scope)]
-                   (is (thrown? Exception (js/to-js (atom {}) scope ctx)))))))
+           (js/with-context
+             (fn [ctx]
+               (let [scope (js/new-safe-scope)]
+                 (is (thrown? Exception (js/to-js (atom {}) scope ctx)))))))
 
   (testing "from-js works"
            (is-identity nil)
@@ -154,5 +157,13 @@
                  (assert-simetric-convertion {:b {"c" {:d [{"e" 4}]}}} scope ctx
                                              {:b {:c {:d [{:e 4}]}}})
                  ))))
-  )
+
+  (testing "native clojure functions can be added"
+           (js/with-context
+             (fn [ctx]
+               (let [scope (js/new-safe-scope)]
+                 (js/set! scope "add" (js/make-fn (fn [ctx scope this [a b]] (+ a b))))
+                 (is (= (js/eval scope "add(1, 2)") 3.0))))))
+
+)
 

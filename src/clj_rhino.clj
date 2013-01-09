@@ -1,6 +1,7 @@
 (ns clj-rhino
   (:refer-clojure :exclude (eval get get-in set!))
-  (:import [org.mozilla.javascript Context UniqueTag NativeArray NativeObject]))
+  (:import [org.mozilla.javascript Context UniqueTag NativeArray NativeObject
+            BaseFunction]))
 
 (defprotocol RhinoConvertible
   (-to-rhino [object scope ctx] "convert a value to a rhino compatible type"))
@@ -198,3 +199,13 @@
                              (.compileFunction ctx scope code 
                                               (or filename "<eval>")
                                               (or line-number 1) sec-domain))))
+
+(defn make-fn [fun]
+  "return an object that can be used as a function in rhino,
+  fun must receive the following arguments [ctx scope this args]
+  args will be passed through from-js before calling fun and the result 
+  through to-js"
+
+  (proxy [BaseFunction] []
+    (call [ctx scope this args]
+      (to-js (fun ctx scope this (from-js args)) scope ctx))))
