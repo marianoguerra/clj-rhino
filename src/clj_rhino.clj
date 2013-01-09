@@ -2,6 +2,56 @@
   (:refer-clojure :exclude (eval get get-in set!))
   (:import [org.mozilla.javascript Context UniqueTag]))
 
+(defprotocol RhinoConvertible
+  (-to-rhino [object scope ctx] "convert a value to a rhino compatible type"))
+
+(defn to-js [obj scope ctx]
+  "convert obj to a rhino compatible object"
+  (-to-rhino obj scope ctx))
+
+(defn- return-self [obj scope ctx] obj)
+  
+(defn to-js-array [arr scope ctx]
+  (.newArray ctx scope (to-array (map #(to-js % scope ctx) arr))))
+
+(defn to-js-ratio [obj scope ctx] (double obj))
+(defn to-js-object [obj scope ctx]
+  (let [js-obj (.newObject ctx scope)]
+    (dorun (map (fn [[key val]]
+                  (let [key (name key)
+                        val (to-js val scope ctx)]
+
+                    (.put js-obj key js-obj val)))
+                obj))
+    js-obj))
+
+(defn to-js-generic [obj scope ctx] 
+  (if (.isArray (class obj))
+    (to-js (seq obj) scope ctx)
+    (throw (Exception. (str "Don't know how to convert to rhino " (class obj))))))
+
+(extend nil                    RhinoConvertible {:-to-rhino return-self})
+(extend java.lang.Boolean      RhinoConvertible {:-to-rhino return-self})
+
+;; Numbers
+(extend java.lang.Number       RhinoConvertible {:-to-rhino return-self})
+(extend clojure.lang.Ratio     RhinoConvertible {:-to-rhino to-js-ratio})
+(extend java.math.BigInteger   RhinoConvertible {:-to-rhino return-self})
+(extend java.math.BigDecimal   RhinoConvertible {:-to-rhino return-self})
+
+;; Symbols, Keywords, and Strings
+(extend clojure.lang.Named     RhinoConvertible {:-to-rhino (fn [obj scope ctx]
+                                                              (name obj))})
+(extend java.lang.CharSequence RhinoConvertible {:-to-rhino (fn [obj scope ctx]
+                                                              (.toString obj))})
+
+;; Collections
+(extend java.util.Map          RhinoConvertible {:-to-rhino to-js-object})
+(extend java.util.Collection   RhinoConvertible {:-to-rhino to-js-array})
+
+;; Maybe a Java array, otherwise fail
+(extend java.lang.Object       RhinoConvertible {:-to-rhino to-js-generic})
+
 (def insecure-vars ["isXMLName" "uneval" "InternalError" "JavaException"
                     "With" "Call" "Script" "Iterator" "StopIteration",
                     "Packages" "java" "javax" "org" "com" "edu" "net"
