@@ -167,6 +167,10 @@
                  (js/set! scope "add" (js/wrap-plain-fn add))
                  (is (= (js/eval scope "add(1, 2)") 3.0))))))
 
+  (testing "eval-timeout times out on infinite loop"
+           (let [scope (js/new-safe-scope)]
+             (is (thrown? Error (js/eval-timeout scope "while (true);" 1000)))))
+
   (testing "native clojure functions can be added"
            (js/with-context
              (fn [ctx]

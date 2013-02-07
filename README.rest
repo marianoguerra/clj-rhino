@@ -131,6 +131,13 @@ or if you don't need the internal parameters::
               (js/set! scope "add" (js/wrap-plain-fn add))
               (js/eval scope "add(1, 2)") 3.0)))
 
+excecute code with timeout::
+
+        (def scope (js/new-safe-scope))
+        (js/eval-timeout scope "while (true);" 1000)
+
+        ; will throw a Error exception
+
 license?
 --------
 

@@ -4,4 +4,7 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.4.0"]
-                 [org.mozilla/rhino "1.7R4"]])
+                 [org.mozilla/rhino "1.7R4"]]
+  
+  :source-paths      ["src/clj"]
+  :java-source-paths ["src/java"])

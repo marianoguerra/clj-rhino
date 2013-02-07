@@ -1,7 +1,8 @@
 (ns clj-rhino
   (:refer-clojure :exclude (eval get get-in set!))
   (:import [org.mozilla.javascript Context UniqueTag NativeArray NativeObject
-            BaseFunction]))
+            BaseFunction]
+           [org.marianoguerra.rhino TimedContextFactory]))
 
 (defprotocol RhinoConvertible
   (-to-rhino [object scope ctx] "convert a value to a rhino compatible type"))
@@ -134,6 +135,15 @@
                              (.evaluateString ctx1 scope code
                                               (or filename "<eval>")
                                               (or line-number 1) sec-domain))))
+
+(defn eval-timeout [scope code timeout-ms & {:keys [filename line-number sec-domain]}]
+  (let [filename (or filename "<eval>")
+        line-number (or line-number 1)
+        factory (TimedContextFactory. timeout-ms)
+        ctx (.enterContext factory)]
+    (try
+      (.evaluateString ctx scope code filename line-number sec-domain)
+      (finally (Context/exit)))))
 
 (defn undefined? [value]
   "return true if value is undefined"
