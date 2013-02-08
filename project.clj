@@ -1,4 +1,4 @@
-(defproject org.marianoguerra/clj-rhino "0.2.0-SNAPSHOT"
+(defproject org.marianoguerra/clj-rhino "0.2.0"
   :description "library to ease the interaction between rhino and clojure"
   :url "http://github.com/marianoguerra/clj-rhino"
   :license {:name "Eclipse Public License"
