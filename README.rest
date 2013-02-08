@@ -131,12 +131,28 @@ or if you don't need the internal parameters::
               (js/set! scope "add" (js/wrap-plain-fn add))
               (js/eval scope "add(1, 2)") 3.0)))
 
-excecute code with timeout::
+execute code with timeout::
 
         (def scope (js/new-safe-scope))
         (js/eval-timeout scope "while (true);" 1000)
 
         ; will throw a Error exception
+
+call function with timeout::
+
+        user=> (def f (js/compile-function scope "function () { while(true); }"))
+        #'user/f
+        user=> (js/call-timeout scope f 1000)
+        TimeOutError
+        org.marianoguerra.rhino.TimedContextFactory.observeInstructionCount
+        (TimedContextFactory.java:47)
+
+        ; function that doesn't timeout
+        user=> (def f1 (js/compile-function scope "function (a, b) { return a +
+        b; }"))
+        #'user/f1
+        user=> (js/call-timeout scope f1 1000 1 3)
+        4.0
 
 license?
 --------
