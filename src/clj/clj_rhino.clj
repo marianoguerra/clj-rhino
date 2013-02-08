@@ -11,9 +11,24 @@
   (-from-rhino [object]
            "convert a value from rhino to a more clojure friendly representation"))
 
-(defn to-js [obj scope ctx]
+(defn with-context [fun]
+  "create a context call fun with it and safelly exit the context"
+  (let [ctx (Context/enter)]
+    (try
+      (fun ctx)
+      (finally (Context/exit)))))
+
+(defn with-context-if-nil [ctx fun]
+     "create a context if ctx is nil, otherwise use ctx and call fun with it,
+     exit safelly after if ctx was created here, otherwise is up to the caller
+     (which should be inside a with-context somewhere up the call stack)"
+  (if ctx
+    (fun ctx)
+    (with-context fun)))
+
+(defn to-js [obj scope & [ctx]]
   "convert obj to a rhino compatible object"
-  (-to-rhino obj scope ctx))
+  (with-context-if-nil ctx #(-to-rhino obj scope %)))
 
 (defn from-js [obj]
   "convert obj from rhino into a clojure friendly representation"
@@ -114,21 +129,6 @@
                     "Packages" "java" "javax" "org" "com" "edu" "net"
                     "getClass" "JavaAdapter" "JavaImporter" "Continuation"
                     "XML" "XMLList" "Namespace" "QName"])
-
-(defn with-context [fun]
-  "create a context call fun with it and safelly exit the context"
-  (let [ctx (Context/enter)]
-    (try
-      (fun ctx)
-      (finally (Context/exit)))))
-
-(defn with-context-if-nil [ctx fun]
-     "create a context if ctx is nil, otherwise use ctx and call fun with it,
-     exit safelly after if ctx was created here, otherwise is up to the caller
-     (which should be inside a with-context somewhere up the call stack)"
-  (if ctx
-    (fun ctx)
-    (with-context fun)))
 
 (defn eval [scope code & {:keys [ctx filename line-number sec-domain]}]
   (with-context-if-nil ctx (fn [ctx1]

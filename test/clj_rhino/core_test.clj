@@ -16,6 +16,14 @@
                   (is (= (js/to-js item scope ctx) js-item)))
                 (map vector arr js-arr)))))
 
+(defn- check-array-to-js-no-ctx [arr scope]
+  (let [js-arr (js/to-js arr scope)]
+    (is (= (count js-arr) (count arr)))
+    (is (= (class js-arr) NativeArray))
+    (dorun (map (fn [[item js-item]]
+                  (is (= (js/to-js item scope) js-item)))
+                (map vector arr js-arr)))))
+
 (defn- is-identity [value]
   (is (= (js/from-js value) value)))
 
@@ -100,6 +108,26 @@
 
                  (is (= (get (js/to-js {:name "mariano"} scope ctx) "name") "mariano"))
                  (is (= (get (js/to-js {:name "mariano" :age 27} scope ctx) "age") 27))))))
+
+  (testing "to-js works without ctx"
+           (let [scope (js/new-safe-scope)]
+
+             (is (= (js/to-js nil scope) nil))
+             (is (= (js/to-js 1 scope) 1))
+             (is (= (js/to-js 1/2 scope) 0.5))
+             (is (= (js/to-js true scope) true))
+             (is (= (js/to-js "foo" scope) "foo"))
+             (is (= (js/to-js :foo scope) "foo"))
+
+             (check-array-to-js-no-ctx [] scope)
+             (check-array-to-js-no-ctx [nil 1 1/2 true "foo" :foo] scope)
+             (check-array-to-js-no-ctx '(nil 1 1/2 true "foo" :foo) scope)
+
+             ; check to-js-generic
+             (check-array-to-js-no-ctx (to-array [nil 1 1/2 true "foo" :foo]) scope)
+
+             (is (= (get (js/to-js {:name "mariano"} scope) "name") "mariano"))
+             (is (= (get (js/to-js {:name "mariano" :age 27} scope) "age") 27))))
 
   (testing "to-js works on complex nested structures"
            (js/with-context
