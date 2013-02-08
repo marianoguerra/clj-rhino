@@ -145,6 +145,14 @@
       (.evaluateString ctx scope code filename line-number sec-domain)
       (finally (Context/exit)))))
 
+(defn call-timeout [scope fun timeout-ms & args]
+  (let [factory (TimedContextFactory. timeout-ms)
+        ctx (.enterContext factory)
+        args (into-array Object (map #(to-js % scope ctx) args))]
+    (try
+      (.call fun ctx scope nil args)
+      (finally (Context/exit)))))
+
 (defn undefined? [value]
   "return true if value is undefined"
   (= value (. UniqueTag NOT_FOUND)))
@@ -225,10 +233,12 @@
   "create a new scope using a safe root scope as parent"
   (new-scope ctx (new-safe-root-scope ctx)))
 
-(defn compile-function [scope code & {:keys [ctx filename line-number sec-domain]}]
+(defn compile-function [scope code & {:keys [filename line-number sec-domain]}]
   "compile and return function defined in code"
-  (with-context-if-nil ctx (fn [ctx]
-                             (.compileFunction ctx scope code 
-                                              (or filename "<eval>")
-                                              (or line-number 1) sec-domain))))
+  (let [ctx (.enterContext (TimedContextFactory. 0))]
+    (try
+      (.compileFunction ctx scope code 
+                        (or filename "<eval>")
+                        (or line-number 1) sec-domain)
+      (finally (Context/exit)))))
 

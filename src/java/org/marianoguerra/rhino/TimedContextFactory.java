@@ -44,7 +44,7 @@ public class TimedContextFactory extends ContextFactory {
 			// it is time to stop the script.
 			// Throw Error instance to ensure that script will never
 			// get control back through catch or finally.
-			throw new Error();
+			throw new TimeOutError(this.timeoutMillis);
 		}
 	}
 

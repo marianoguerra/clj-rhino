@@ -1,5 +1,6 @@
 (ns clj-rhino.core-test
-  (:import [org.mozilla.javascript Context UniqueTag EvaluatorException NativeArray])
+  (:import [org.mozilla.javascript Context UniqueTag EvaluatorException NativeArray]
+           [org.marianoguerra.rhino TimeOutError])
   (:use clojure.test)
   (:require [clj-rhino :as js]))
 
@@ -197,7 +198,26 @@
 
   (testing "eval-timeout times out on infinite loop"
            (let [scope (js/new-safe-scope)]
-             (is (thrown? Error (js/eval-timeout scope "while (true);" 1000)))))
+             (is (thrown? TimeOutError (js/eval-timeout scope "while (true);" 1000)))))
+
+  (testing "call-timeout works"
+           (let [scope (js/new-safe-scope)
+                 fun-code "function (a, b) { return a + b; }"
+                 compiled-fun (js/compile-function scope fun-code)
+                 result (js/call-timeout scope compiled-fun 1000 2 3)]
+
+             (is (= result 5.0))))
+
+  (testing "call-timeout timeouts correctly"
+           (let [scope (js/new-safe-scope)
+                 fun-code "function (a, b) { while(true); }"
+                 compiled-fun (js/compile-function scope fun-code)]
+
+             (try
+               (js/call-timeout scope compiled-fun 1000 2 3)
+               (throw (Exception. "shouldn't reach this point, should timeout"))
+               (catch TimeOutError error
+                 (is (= (.-timeoutMillis error) 1000))))))
 
   (testing "native clojure functions can be added"
            (js/with-context
