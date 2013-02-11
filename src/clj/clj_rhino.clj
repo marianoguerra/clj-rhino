@@ -166,7 +166,7 @@
   "return true if value is undefined"
   (= value (. UniqueTag NOT_FOUND)))
 
-(def defined? (comp not undefined?))
+(def defined? (complement undefined?))
 
 (defn set! [scope name value]
   "bind an object to a name in scope"

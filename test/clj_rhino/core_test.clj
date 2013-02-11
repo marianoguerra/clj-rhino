@@ -36,6 +36,10 @@
            (is (not (js/undefined? 1)))
            (is (js/undefined? (. UniqueTag NOT_FOUND))))
 
+  (testing "defined? works"
+           (is (js/defined? 1))
+           (is (not (js/defined? (. UniqueTag NOT_FOUND)))))
+
   (testing "get returns undefined if get'ing inexistent var"
            (let [scope (js/new-scope)]
              (is (js/undefined? (js/get scope "foo")))))
