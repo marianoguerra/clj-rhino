@@ -131,10 +131,11 @@
                     "XML" "XMLList" "Namespace" "QName"])
 
 (defn eval [scope code & {:keys [ctx filename line-number sec-domain]}]
-  (with-context-if-nil ctx (fn [ctx1]
-                             (.evaluateString ctx1 scope code
-                                              (or filename "<eval>")
-                                              (or line-number 1) sec-domain))))
+  (with-context-if-nil ctx
+    (fn [ctx1]
+      (.evaluateString ctx1 scope code
+                       (or filename "<eval>")
+                       (or line-number 1) sec-domain))))
 
 (defn eval-timeout [scope code timeout-ms & {:keys [filename line-number sec-domain]}]
   (let [filename (or filename "<eval>")
@@ -192,22 +193,22 @@
              (recur sentinel scope (next ks))))
          scope))))
 
-
 (defn new-root-scope [& [ctx sealed vars-to-remove]]
   "create a new root js scope and return it
   make it sealed if sealed is true
   remove vars-to-remove if non nil (a seq of strings)"
-  (with-context-if-nil ctx (fn [ctx]
-                             (let [scope (.initStandardObjects ctx nil true)]
-                               ; force loading RegExp
-                               (eval scope "RegExp;" :ctx ctx)
+  (with-context-if-nil ctx
+    (fn [ctx]
+      (let [scope (.initStandardObjects ctx nil true)]
+        ; force loading RegExp
+        (eval scope "RegExp;" :ctx ctx)
 
-                               (dorun (map #(.delete scope %) (or vars-to-remove [])))
+        (dorun (map #(.delete scope %) (or vars-to-remove [])))
 
-                               (when sealed
-                                 (.sealObject scope))
+        (when sealed
+          (.sealObject scope))
 
-                               scope))))
+        scope))))
 
 (defn new-safe-root-scope [& [ctx]]
   "create a new root js scope removing dangerous references and sealing it"
@@ -216,18 +217,16 @@
 (defn new-scope [& [ctx parent-scope vars-to-remove]]
   "create a new scope with parent-scope as parent, if parent-scope is nil
   create it"
-  (with-context-if-nil ctx (fn [ctx]
-                             (let [parent-scope (or parent-scope
-                                                    (new-root-scope ctx true
-                                                                    vars-to-remove))
-                                   scope (.newObject ctx parent-scope)]
-                               
-                               (doto scope
-                                 (.setPrototype parent-scope)
-                                 (.setParentScope nil))
-                               
-                               scope))))
+  (with-context-if-nil ctx
+    (fn [ctx]
+      (let [parent-scope (or parent-scope (new-root-scope ctx true vars-to-remove))
+            scope (.newObject ctx parent-scope)]
 
+        (doto scope
+          (.setPrototype parent-scope)
+          (.setParentScope nil))
+
+        scope))))
 
 (defn new-safe-scope [& [ctx]]
   "create a new scope using a safe root scope as parent"
