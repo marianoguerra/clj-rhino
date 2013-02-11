@@ -146,6 +146,14 @@
       (.evaluateString ctx scope code filename line-number sec-domain)
       (finally (Context/exit)))))
 
+(defn call-timeout-raw [scope fun timeout-ms & args]
+  (let [factory (TimedContextFactory. timeout-ms)
+        ctx (.enterContext factory)
+        args (into-array Object args)]
+    (try
+      (.call fun ctx scope nil args)
+      (finally (Context/exit)))))
+
 (defn call-timeout [scope fun timeout-ms & args]
   (let [factory (TimedContextFactory. timeout-ms)
         ctx (.enterContext factory)
