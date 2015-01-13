@@ -1,7 +1,7 @@
 (ns clj-rhino
   (:refer-clojure :exclude (eval get get-in set!))
   (:import [org.mozilla.javascript Context UniqueTag NativeArray NativeObject
-            BaseFunction]
+            BaseFunction NativeJavaObject ConsString]
            [org.marianoguerra.rhino TimedContextFactory]))
 
 (defprotocol RhinoConvertible
@@ -116,13 +116,15 @@
 (extend java.math.BigInteger   ClojureConvertible {:-from-rhino identity})
 (extend java.math.BigDecimal   ClojureConvertible {:-from-rhino identity})
 (extend java.lang.CharSequence ClojureConvertible {:-from-rhino identity})
-(extend java.lang.Object       ClojureConvertible {:-from-rhino identity})
 ; NOTE: undefined and null will return nil, there are other tags which should not 
 ; be produced from a js program
 ; https://github.com/mozilla/rhino/blob/master/src/org/mozilla/javascript/UniqueTag.java
-(extend UniqueTag              ClojureConvertible {:-from-rhino (fn [obj] nil)})
-(extend NativeObject           ClojureConvertible {:-from-rhino from-js-object})
-(extend NativeArray            ClojureConvertible {:-from-rhino (comp vec (partial map from-js))})
+(extend UniqueTag        ClojureConvertible {:-from-rhino (fn [obj] nil)})
+(extend NativeJavaObject ClojureConvertible {:-from-rhino (fn [obj] (.unwrap obj))})
+(extend ConsString       ClojureConvertible {:-from-rhino (fn [obj] (.toString obj))})
+(extend NativeObject     ClojureConvertible {:-from-rhino from-js-object})
+(extend NativeArray      ClojureConvertible {:-from-rhino (comp vec (partial map from-js))})
+(extend java.lang.Object ClojureConvertible {:-from-rhino identity})
 
 (def insecure-vars ["isXMLName" "uneval" "InternalError" "JavaException"
                     "With" "Call" "Script" "Iterator" "StopIteration",
